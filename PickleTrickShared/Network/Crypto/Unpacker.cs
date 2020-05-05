@@ -109,15 +109,15 @@ namespace PickleTrickShared.Network.Crypto
 
                 // We can start calculating the packet sequence, opcode, and length now that we know we have
                 // at least what we _should_ theoretically need to calculate them.
-                ushort sequence = (ushort)((KeyTable.Table[((packet[3] ^ packing) << 8) + packet[5]] << 8)
-                    + KeyTable.Table[((packet[2] ^ key) << 8) + packet[4]]);
+                ushort sequence = (ushort)((KeyTable.Table[(ushort)(((packet[3] ^ packet[7]) << 8) + packet[5])] << 8)
+                    + KeyTable.Table[(ushort)(((packet[2] ^ key) << 8) + packet[4])]);
 
-                ushort opcode = (ushort)((KeyTable.Table[((packet[1] ^ key) << 8) + packet[3]] << 8)
-                    + KeyTable.Table[((packet[6] ^ packet[0]) << 8) + packet[2]]);
+                ushort opcode = (ushort)((KeyTable.Table[(ushort)(((packet[1] ^ key) << 8) + packet[3])] << 8)
+                    + KeyTable.Table[(ushort)(((packet[6] ^ packet[0]) << 8) + packet[2])]);
 
                 // The length at this point includes the dummy bytes. We'll get rid of that later.
                 var length = (ushort)((KeyTable.Table[((packet[6] ^ packet[7]) << 8) + packet[1]] << 8)
-                    + KeyTable.Table[((packet[7] ^ key) << 8) + packet[0]]);
+                    + KeyTable.Table[(ushort)(((packet[7] ^ key) << 8) + packet[0])]);
 
                 // Update Packing within the actual packet for later use.
                 // This should now be the "second round" value.

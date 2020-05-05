@@ -26,15 +26,22 @@ namespace PickleTrickShared.Network.Crypto
             return BitConverter.ToString(b).Replace("-", " ");
         }
 
+        public static void CopyTo(Span<byte> b, int i, ushort us)
+        {
+            b[i] = (byte)us;
+            b[i + 1] = (byte)(us >> 8);
+        }
+
+
         public static void CopyTo(byte[] b, int i, ushort us)
         {
-            b[i + 0] = (byte)us;
+            b[i] = (byte)us;
             b[i + 1] = (byte)(us >> 8);
         }
 
         public static void CopyTo(byte[] b, int i, int us)
         {
-            b[i + 0] = (byte)us;
+            b[i] = (byte)us;
             b[i + 1] = (byte)(us >> 8);
             b[i + 2] = (byte)(us >> 0x10);
             b[i + 3] = (byte)(us >> 0x18);
@@ -42,7 +49,7 @@ namespace PickleTrickShared.Network.Crypto
 
         public static void CopyTo(byte[] b, int i, uint us)
         {
-            b[i + 0] = (byte)us;
+            b[i] = (byte)us;
             b[i + 1] = (byte)(us >> 8);
             b[i + 2] = (byte)(us >> 0x10);
             b[i + 3] = (byte)(us >> 0x18);
