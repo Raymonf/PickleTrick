@@ -3,9 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PickleTrick", "PickleTrick\PickleTrick.csproj", "{312335F7-CF27-4371-BA19-8A0EDCE1E14A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.LoginServer", "PickleTrick\PickleTrick.LoginServer.csproj", "{312335F7-CF27-4371-BA19-8A0EDCE1E14A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PickleTrickShared", "PickleTrickShared\PickleTrickShared.csproj", "{AE0F926E-E3AF-4BFF-987E-B895A17964AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.Core.Common", "PickleTrickShared\PickleTrick.Core.Common.csproj", "{AE0F926E-E3AF-4BFF-987E-B895A17964AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PickleTrick.Core.Server", "PickleTrick.Core.Server\PickleTrick.Core.Server.csproj", "{68FAD52C-FB41-4F9B-A22F-5FBF11919794}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PickleTrick.Core.Crypto", "PickleTrick.Core.Crypto\PickleTrick.Core.Crypto.csproj", "{22183904-D9E5-41D0-88FB-6AB95EE982EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{AE0F926E-E3AF-4BFF-987E-B895A17964AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AE0F926E-E3AF-4BFF-987E-B895A17964AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AE0F926E-E3AF-4BFF-987E-B895A17964AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{68FAD52C-FB41-4F9B-A22F-5FBF11919794}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68FAD52C-FB41-4F9B-A22F-5FBF11919794}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68FAD52C-FB41-4F9B-A22F-5FBF11919794}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68FAD52C-FB41-4F9B-A22F-5FBF11919794}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22183904-D9E5-41D0-88FB-6AB95EE982EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22183904-D9E5-41D0-88FB-6AB95EE982EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22183904-D9E5-41D0-88FB-6AB95EE982EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22183904-D9E5-41D0-88FB-6AB95EE982EB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

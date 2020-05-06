@@ -1,13 +1,12 @@
 ﻿using System;
-using PickleTrickShared;
 
 namespace PickleTrick.LoginServer
 {
-    class Program : ServerApp
+    class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            new LoginServer(9980);
         }
     }
 }

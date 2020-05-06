@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using PickleTrick.Core.Common;
 
-namespace PickleTrickShared.Network.Crypto
+namespace PickleTrick.Core.Crypto
 {
     public class Unpacker
     {
@@ -17,11 +16,11 @@ namespace PickleTrickShared.Network.Crypto
         /// of fields within the raw packet. 
         /// </summary>
         /// <param name="header">The Header object before decrypting the packet header.</param>
-        /// <param name="sessionInfo">The current client session.</param>
+        /// <param name="client">The current client session.</param>
         /// <returns>Primitive packet validity flag</returns>
-        private static bool CheckHeader(Header header, Client sessionInfo)
+        private static bool CheckHeader(Header header, CryptoClient client)
         {
-            if (!sessionInfo.IsFirstPacket)
+            if (!client.IsFirstPacket)
             {
                 return true;
             }
@@ -31,20 +30,20 @@ namespace PickleTrickShared.Network.Crypto
             {
                 // If that magic value is 15, we know this is a primitively "valid packet".
                 // We can update the session since we know the next packet is no longer the first packet.
-                sessionInfo.IsFirstPacket = false;
+                client.IsFirstPacket = false;
                 return true;
             }
 
             return false;
         }
         
-        private static Header PacketToHeader(byte[] data)
+        private static Header PacketToHeader(Span<byte> data)
         {
             return new Header()
             {
-                Len = BitConverter.ToUInt16(data, 0),
-                Cmd = BitConverter.ToUInt16(data, 2),
-                Seq = BitConverter.ToUInt16(data, 4),
+                Len = BitConverter.ToUInt16(data),
+                Cmd = BitConverter.ToUInt16(data[2..]),
+                Seq = BitConverter.ToUInt16(data[4..]),
                 RandKey = data[6],
                 Packing = data[7],
                 CheckFlag = data[8]
@@ -58,14 +57,14 @@ namespace PickleTrickShared.Network.Crypto
         /// </summary>
         /// <param name="packet">The packet data to unpack.</param>
         /// <returns>Whether exclusion was successful or not, also indicating the packet's validity</returns>
-        private static bool ExcludeDummy(byte[] packet)
+        private static bool ExcludeDummy(Span<byte> packet)
         {
             byte packing = packet[7];
 
             // The "second round" value of Packing will let us know if there's any dummy data.
             if ((packing & 8) > 0)
             {
-                ushort lenNoDummy = (ushort)(BitConverter.ToUInt16(packet, 0) - (packet[6] % 13));
+                ushort lenNoDummy = (ushort)(BitConverter.ToUInt16(packet) - (packet[6] % 13));
 
                 if (lenNoDummy < 11) // The length should always be >11 if there's dummy data.
                 {
@@ -85,19 +84,21 @@ namespace PickleTrickShared.Network.Crypto
         /// <summary>
         /// Header decryption logic
         /// </summary>
-        /// <param name="sessionInfo">The current client session.</param>
+        /// <param name="client">The current client session.</param>
         /// <param name="packet">The packet data to unpack.</param>
         /// <returns>A header if successfully decoded, or null if unsuccessful</returns>
-        private static Header UnpackHeader(byte[] packet, Client sessionInfo)
+        private static Header UnpackHeader(Span<byte> packet, CryptoClient client)
         {
-            var checkHeader = CheckHeader(PacketToHeader(packet), sessionInfo);
+            var checkHeader = CheckHeader(PacketToHeader(packet), client);
 
             if (!checkHeader)
                 throw new Exception("Header was invalid");
 
-            var key = sessionInfo.Key;
+            var key = client.Key;
 
             byte packing = packet[7];
+
+            // Don't unpack the header twice.
             if (packing > 0xFu)
             {
                 byte packetStatus = KeyTable.Table[(packet[6] << 8) + packing];
@@ -131,8 +132,8 @@ namespace PickleTrickShared.Network.Crypto
             }
 
             // Let's check some basic lengths and then verify that the checksum was correct.
-            if (BitConverter.ToUInt16(packet, 0) >= 0xBu
-                && BitConverter.ToInt32(packet, 0) < 0x7FFFFFFFu
+            if (BitConverter.ToUInt16(packet) >= 0xBu
+                && BitConverter.ToInt32(packet) < 0x7FFFFFFFu
                 && CryptoCommon.MakeChecksum(packet, key) == packet[8])
             {
                 // Since all of these checks have passed, we can create a Header from this data.
@@ -147,10 +148,10 @@ namespace PickleTrickShared.Network.Crypto
         /// <summary>
         /// Actual data decryption logic and tail checksum validation logic
         /// </summary>
-        /// <param name="sessionInfo">The current client session.</param>
+        /// <param name="client">The current client session.</param>
         /// <param name="packet">The packet data to unpack.</param>
         /// <returns>Whether we were able to successfully unpack the data</returns>
-        private static bool UnpackData(Client sessionInfo, byte[] packet)
+        private static bool UnpackData(CryptoClient client, Span<byte> packet)
         {
             var header = PacketToHeader(packet);
             byte magicKey = (byte)(header.Cmd * header.RandKey % 256);
@@ -201,7 +202,7 @@ namespace PickleTrickShared.Network.Crypto
 
             // We've been calculating a "tail checksum" value.
             // Of course, this should match the packet's given tail checksum value.
-            if (calculatedTail != BitConverter.ToUInt16(packet, offset + 7))
+            if (calculatedTail != BitConverter.ToUInt16(packet[(offset + 7)..]))
             {
                 return false;
             }
@@ -212,12 +213,11 @@ namespace PickleTrickShared.Network.Crypto
             // In other words, odd value = update; even value = don't update.
             if ((header.Packing & 1) > 0)
             {
-                // We should store the current key.
-                // We'll likely need it if we come across a split whole packet.
-                sessionInfo.LastKey = sessionInfo.Key;
+                // We might want to store the current key.
+                // client.LastKey = client.Key;
 
                 // After storing, we can update it.
-                CryptoCommon.UpdateKey(sessionInfo, calculatedTail);
+                CryptoCommon.UpdateKey(client, calculatedTail);
             }
 
             return true;
@@ -226,12 +226,12 @@ namespace PickleTrickShared.Network.Crypto
         /// <summary>
         /// Unpacks an encrypted packet from Trickster.
         /// </summary>
-        /// <param name="sessionInfo">The current client session.</param>
+        /// <param name="client">The current client session.</param>
         /// <param name="packet">The packet data to unpack.</param>
         /// <returns>The length of the data INCLUDING the dummy data.</returns>
-        public static ushort Unpack(Client sessionInfo, byte[] packet)
+        public static ushort Unpack(CryptoClient client, Span<byte> packet)
         {
-            var header = UnpackHeader(packet, sessionInfo);
+            var header = UnpackHeader(packet, client);
             if (header == null)
                 throw new Exception("Header could not be unpacked");
 
@@ -248,7 +248,7 @@ namespace PickleTrickShared.Network.Crypto
             if (!excludeDummy)
                 throw new Exception("Dummy data could not be excluded");
 
-            bool unpackData = UnpackData(sessionInfo, packet);
+            bool unpackData = UnpackData(client, packet);
             if (!unpackData)
                 throw new Exception("Data could not be unpacked");
 

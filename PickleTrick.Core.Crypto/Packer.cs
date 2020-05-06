@@ -1,22 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using PickleTrick.Core.Common;
 
-namespace PickleTrickShared.Network.Crypto
+namespace PickleTrick.Core.Crypto
 {
     public class Packer
     {
         // We're going to keep a static Random object here so we can generate RandKeys as we wish.
         private static readonly Random _random = new Random();
 
-        private void PackHeader(Client client, byte[] packet)
+        private static void PackHeader(CryptoClient client, Span<byte> packet)
         {
-            var key = client.Key;
+            var key = client.ServerKey;
 
             var randKey = _random.Next(0, 255);
-            packet[6] = (byte)(randKey & 0xFF); // Set RandKey field
+            packet[6] = (byte)randKey; // Set RandKey field
             packet[7] = 0x07; // Set Packing field to 0x07 (change key)
-            packet[8] = CryptoCommon.MakeChecksum(packet, client.Key); // Update the checkflag
+            packet[8] = CryptoCommon.MakeChecksum(packet, key); // Update the checkflag
 
             // Encrypt packing
             packet[7] = KeyTable.Table[(ushort)((randKey << 8) + packet[7])];
@@ -24,22 +23,20 @@ namespace PickleTrickShared.Network.Crypto
             // Encrypt length
             var length = (ushort)((KeyTable.Table[(ushort)(((packet[6] ^ packet[7]) << 8) + packet[1])] << 8)
                 + KeyTable.Table[(ushort)(((packet[7] ^ key) << 8) + packet[0])]);
+            ByteUtil.CopyTo(packet, 0, length);
 
             // Encrypt opcode
             var opcode = (ushort)((KeyTable.Table[(ushort)(((packet[1] ^ key) << 8) + packet[3])] << 8)
                 + KeyTable.Table[(ushort)(((packet[6] ^ packet[0]) << 8) + packet[2])]);
+            ByteUtil.CopyTo(packet, 2, opcode);
 
             // Encrypt sequence
             var sequence = (ushort)((KeyTable.Table[(ushort)(((packet[3] ^ packet[7]) << 8) + packet[5])] << 8)
                 + KeyTable.Table[(ushort)(((packet[2] ^ key) << 8) + packet[4])]);
-
-            // Replace non-encrypted fields
-            ByteUtil.CopyTo(packet, 0, length);
-            ByteUtil.CopyTo(packet, 2, opcode);
             ByteUtil.CopyTo(packet, 4, sequence);
         }
 
-        private void PackStream(Client client, ushort opcode, Span<byte> packet)
+        private static void PackStream(CryptoClient client, ushort opcode, Span<byte> packet)
         {
             // Get the packet data only, from offset 9 to (len - 2)
             var data = packet[9..^2];
@@ -57,12 +54,6 @@ namespace PickleTrickShared.Network.Crypto
                 data[offset] = KeyTable.Table[(ushort)(((magicKey ^ offset) << 8) + data[offset])];
             }
 
-            // Remove this later: it's just a temporary sanity check from the old code.
-            if (offset != data.Length || offset >= packet.Length)
-            {
-                throw new Exception("Impossible...");
-            }
-
             // Again, we know that Packing is 7.
             // 7 & 1 is 1
             // Update the key.
@@ -78,19 +69,21 @@ namespace PickleTrickShared.Network.Crypto
             }
         }
 
-        public byte[] Pack(Client client, ushort opcode, byte[] data)
+        public static byte[] Pack(CryptoClient client, ushort opcode, byte[] data)
         {
             // Length: 9 bytes (header  ) + data + 2 bytes (tail checksum)
-            Span<byte> result = /*stackalloc*/ new byte[9 + data.Length + 2];
+            var result = /*stackalloc*/ new byte[9 + data.Length + 2];
+            Span<byte> span = result;
 
-            ByteUtil.CopyTo(result, 0, (ushort)result.Length);
-            ByteUtil.CopyTo(result, 2, opcode);
-            ByteUtil.CopyTo(result, 4, client.Sequence);
+            ByteUtil.CopyTo(span, 0, (ushort)span.Length);
+            ByteUtil.CopyTo(span, 2, opcode);
+            ByteUtil.CopyTo(span, 4, client.ServerSequence);
+            Buffer.BlockCopy(data, 0, result, 9, data.Length);
 
-            PackHeader(client, data);
-            PackStream(client, opcode, result);
+            PackHeader(client, span);
+            PackStream(client, opcode, span);
 
-            return result.ToArray();
+            return result;
         }
     }
 }

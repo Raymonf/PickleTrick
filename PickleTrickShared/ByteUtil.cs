@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace PickleTrickShared.Network.Crypto
+namespace PickleTrick.Core.Common
 {
     public class ByteUtil
     {
