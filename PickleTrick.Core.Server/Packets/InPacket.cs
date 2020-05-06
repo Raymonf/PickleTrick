@@ -1,5 +1,6 @@
 ﻿using PickleTrick.Core.Common;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -49,28 +50,35 @@ namespace PickleTrick.Core.Server.Packets
 
         public ushort ReadUInt16()
         {
-            var i = BitConverter.ToUInt16(packet, offset);
+            var i = BinaryPrimitives.ReadUInt16LittleEndian(packet[offset..]);
             offset += 2;
             return i;
         }
 
-        public int ReadInt()
+        public uint ReadUInt32()
         {
-            var i = BitConverter.ToInt32(packet, offset);
+            var i = BinaryPrimitives.ReadUInt32LittleEndian(packet[offset..]);
             offset += 4;
             return i;
         }
 
-        public uint ReadUInt()
+        public ulong ReadUInt64()
         {
-            var i = BitConverter.ToUInt32(packet, offset);
+            var i = BinaryPrimitives.ReadUInt64LittleEndian(packet[offset..]);
+            offset += 8;
+            return i;
+        }
+
+        public int ReadInt32()
+        {
+            var i = BinaryPrimitives.ReadInt32LittleEndian(packet[offset..]);
             offset += 4;
             return i;
         }
 
-        public long ReadLong()
+        public long ReadInt64()
         {
-            var i = BitConverter.ToInt64(packet, offset);
+            var i = BinaryPrimitives.ReadInt64LittleEndian(packet[offset..]);
             offset += 8;
             return i;
         }
@@ -83,15 +91,22 @@ namespace PickleTrick.Core.Server.Packets
         {
             // Determine the end of the string. Find the first 0x00.
             int len = 0;
+            bool hasNull = false;
             for (int i = offset; i < packet.Length; i++)
             {
                 if (packet[i] != 0x00)
+                {
                     len++;
+                }
                 else
+                {
+                    hasNull = true;
                     break;
+                }
             }
 
-            var b = ReadBytes(len + 1);
+            // Don't read past the end if there's no null terminator.
+            var b = ReadBytes(len + (hasNull ? 1 : 0));
             return Constants.Encoding.GetString(b).TrimEnd('\0');
         }
 

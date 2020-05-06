@@ -4,23 +4,85 @@ using System.Threading;
 using System.Net.Sockets;
 using PickleTrick.Core.Crypto;
 using PickleTrick.Core.Server.Events;
+using Tomlyn;
+using System.IO;
+using Tomlyn.Model;
+using Serilog;
 
 namespace PickleTrick.Core.Server
 {
     public abstract class ServerApp
     {
-        public event OnPacketDelegate OnPacket;
+        /// <summary>
+        /// An abstract method to implement in order to let server apps
+        /// initialize server-specific things, like attaching to the OnPacket event.
+        /// </summary>
         public abstract void PrivateInit();
+        public abstract void PrivateConfigure();
+        public abstract string GetServerName();
+
+        protected int port = -1;
+
+        public ServerConfiguration Configuration = new ServerConfiguration();
+        public event OnPacketDelegate OnPacket;
 
         // Thread signal.  
         public ManualResetEvent allDone = new ManualResetEvent(false);
 
-        public ServerApp(int port)
+        /// <summary>
+        /// Non-explicit ServerApp constuctor
+        /// Assume port will be determined and set from PrivateConfigure.
+        /// </summary>
+        public ServerApp()
         {
-            Initialize(port);
+            Configure();
+            PrivateConfigure();
+            if (port == -1)
+                throw new Exception("Port was not set with the non-explicit ServerApp constructor.");
+            Initialize();
         }
 
-        private void Initialize(int port)
+        /// <summary>
+        /// Non-explicit ServerApp constuctor
+        /// Assume port will be a constant.
+        /// </summary>
+        public ServerApp(int port)
+        {
+            Configure();
+            PrivateConfigure();
+            this.port = port;
+            Initialize();
+        }
+
+        /// <summary>
+        /// We will configure the database here.
+        /// Server apps will get to configure themselves in PrivateConfig.
+        /// </summary>
+        public void Configure()
+        {
+            // Set up the logger first.
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.Console()
+                .CreateLogger();
+
+            Console.Title = GetServerName();
+            Log.Information(GetServerName()
+                + Environment.NewLine
+                + new string('-', GetServerName().Length + 24));
+
+            var db = Toml.Parse(File.ReadAllText("db.toml")).ToModel();
+            var table = (TomlTable) db["db"];
+            Configuration.Database.Host = (string) table["host"];
+            Configuration.Database.Database = (string)table["database"];
+            Configuration.Database.Username = (string)table["username"];
+            Configuration.Database.Password = (string)table["password"];
+        }
+
+        /// <summary>
+        /// Beginning listening.
+        /// </summary>
+        private void Initialize()
         {
             Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
@@ -28,6 +90,8 @@ namespace PickleTrick.Core.Server
             {
                 listener.Bind(new IPEndPoint(IPAddress.Any, port));
                 listener.Listen(100);
+
+                Log.Information("Listening for clients on port {0}.", port);
 
                 PrivateInit();
 
@@ -43,7 +107,7 @@ namespace PickleTrick.Core.Server
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                Log.Error(e.ToString());
 
                 if (System.Diagnostics.Debugger.IsAttached)
                     throw e;
@@ -65,6 +129,8 @@ namespace PickleTrick.Core.Server
                 Socket = handler
             };
 
+            Log.Information("New connection received from {0}.", handler.RemoteEndPoint);
+
             handler.BeginReceive(state.CurrentBuffer, 0, state.CurrentBuffer.Length, 0,
                 new AsyncCallback(ReadCallback), state);
         }
@@ -76,10 +142,46 @@ namespace PickleTrick.Core.Server
             Socket handler = client.Socket;
 
             // Read data from the socket.
-            int bytesRead = handler.EndReceive(ar);
+            int bytesRead = 0;
+
+            try
+            {
+                bytesRead = handler.EndReceive(ar);
+            }
+            catch (Exception ex) when (
+                // The user probably forcefully disconnected.
+                ex is SocketException
+                || ex is ObjectDisposedException
+            )
+            {
+                // Try to close the socket but don't freak out if it fails.
+                try
+                {
+                    handler.Close();
+                }
+                catch { }
+
+                // Don't try to read any more data. We're out of here.
+                return;
+            }
 
             if (bytesRead > 0)
             {
+                /*
+                 * Trickster has two types of special packets, which I call the following:
+                 * 1. Merged packets, where multiple packets are sent as one packet.
+                 * 2. Split packets, likely an artifact of it using TCP for communication.
+                 * 
+                 * For merged packets, we have to determine the end of a packet and start reading the next
+                 * packet whenever we finish a packet. We do this by checking if there's still data to read.
+                 * 
+                 * For split packets we have to keep a ~64kb packet buffer for the server to store data in.
+                 * Whenever we get a new packet, we'll simply create a new buffer that appends the old data
+                 * (aka the stored data) to the beginning of the buffer, followed by the new ("current") data.
+                 * 
+                 * Sometimes, a packet can be both merged _and_ split. This code should hopefully handle that.
+                 * Unfortunately, it's not easily tested even with unit tests. As such, I'll leave this as a TODO.
+                 */
                 try
                 {
                     Span<byte> buffer = client.CurrentBuffer;
@@ -133,7 +235,7 @@ namespace PickleTrick.Core.Server
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.ToString());
+                    Log.Error(e.ToString());
                     if (System.Diagnostics.Debugger.IsAttached)
                         throw e;
                     else
@@ -164,7 +266,7 @@ namespace PickleTrick.Core.Server
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                Log.Error(e.ToString());
                 if (System.Diagnostics.Debugger.IsAttached)
                     throw e;
                 else

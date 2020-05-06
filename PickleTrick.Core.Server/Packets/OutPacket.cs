@@ -9,9 +9,9 @@ namespace PickleTrick.Core.Server.Packets
 {
     public class OutPacket
     {
-        private List<byte> packet;
+        private readonly List<byte> packet;
         private readonly ushort opcode;
-        private Client client;
+        private readonly Client client;
 
         public OutPacket(ushort opcode, IUser user)
         {
@@ -26,6 +26,14 @@ namespace PickleTrick.Core.Server.Packets
             this.opcode = opcode;
             this.client = client;
         }
+
+        public OutPacket(Enum opcode, IUser user)
+            : this(Convert.ToUInt16(opcode), user)
+        { }
+
+        public OutPacket(Enum opcode, Client client)
+            : this(Convert.ToUInt16(opcode), client)
+        { }
 
         public bool Send()
         {

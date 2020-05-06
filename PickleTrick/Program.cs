@@ -6,7 +6,7 @@ namespace PickleTrick.LoginServer
     {
         static void Main(string[] args)
         {
-            new LoginServer(9980);
+            new LoginServer();
         }
     }
 }

@@ -1,0 +1,14 @@
+[loginserver]
+port = 9980
+
+# Define servers for the server list here.
+[worlds]
+
+	[worlds.world1]
+	name = "Test World"
+
+		# Island named "test"
+		[worlds.world1.test]
+		name = "Test Island"
+		ip = "127.0.0.1"
+		port = 10006

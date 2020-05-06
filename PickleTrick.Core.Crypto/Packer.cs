@@ -14,7 +14,7 @@ namespace PickleTrick.Core.Crypto
 
             var randKey = _random.Next(0, 255);
             packet[6] = (byte)randKey; // Set RandKey field
-            packet[7] = 0x07; // Set Packing field to 0x07 (change key)
+            packet[7] = 0x06; // Set Packing field to 0x06 (don't change key)
             packet[8] = CryptoCommon.MakeChecksum(packet, key); // Update the checkflag
 
             // Encrypt packing
@@ -54,10 +54,11 @@ namespace PickleTrick.Core.Crypto
                 data[offset] = KeyTable.Table[(ushort)(((magicKey ^ offset) << 8) + data[offset])];
             }
 
-            // Again, we know that Packing is 7.
-            // 7 & 1 is 1
-            // Update the key.
-            CryptoCommon.UpdateKey(client, tail);
+            // Update the key if Packing is odd.
+            // We have to actually decrypt the Packing value
+            // in order to get this value, since we encrypt it above.
+            if (((KeyTable.Table[(ushort)((packet[6] << 8) + packet[7])]) & 1) > 0)
+                CryptoCommon.UpdateKey(client, tail);
 
             // Now we can pack the tail value.
             var seq = offset;

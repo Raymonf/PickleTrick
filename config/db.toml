@@ -1,0 +1,5 @@
+[db]
+host = "localhost"
+database = "pickletrick"
+username = "root"
+password = "root"
