@@ -22,12 +22,6 @@ namespace PickleTrick.Core.Crypto
         public byte ServerKey { get { return 0x01; } }
 
         /// <summary>
-        /// Stored encryption key, in case we have a split packet.
-        /// We might not need this.
-        /// </summary>
-        // public byte LastKey { get; set; } = 0x01;
-
-        /// <summary>
         /// The current packet ID (sort of).
         /// </summary>
         public ushort Sequence { get; set; } = 0x00;

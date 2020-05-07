@@ -213,10 +213,7 @@ namespace PickleTrick.Core.Crypto
             // In other words, odd value = update; even value = don't update.
             if ((header.Packing & 1) > 0)
             {
-                // We might want to store the current key.
-                // client.LastKey = client.Key;
-
-                // After storing, we can update it.
+                // We can update the key now. We're done.
                 CryptoCommon.UpdateKey(client, calculatedTail);
             }
 
