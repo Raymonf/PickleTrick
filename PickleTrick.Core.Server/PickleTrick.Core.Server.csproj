@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PickleTrick.Core.Common\PickleTrick.Core.Common.csproj" />
     <ProjectReference Include="..\PickleTrick.Core.Crypto\PickleTrick.Core.Crypto.csproj" />
   </ItemGroup>
 

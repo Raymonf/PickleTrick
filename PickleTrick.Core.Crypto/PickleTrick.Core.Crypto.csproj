@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PickleTrickShared\PickleTrick.Core.Common.csproj" />
+    <ProjectReference Include="..\PickleTrick.Core.Common\PickleTrick.Core.Common.csproj" />
   </ItemGroup>
 
 </Project>
