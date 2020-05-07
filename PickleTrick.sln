@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.LoginServer", "PickleTrick.LoginServer\PickleTrick.LoginServer.csproj", "{312335F7-CF27-4371-BA19-8A0EDCE1E14A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.Core.Common", "PickleTrickShared\PickleTrick.Core.Common.csproj", "{AE0F926E-E3AF-4BFF-987E-B895A17964AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.Core.Common", "PickleTrick.Core.Common\PickleTrick.Core.Common.csproj", "{AE0F926E-E3AF-4BFF-987E-B895A17964AD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PickleTrick.Core.Server", "PickleTrick.Core.Server\PickleTrick.Core.Server.csproj", "{68FAD52C-FB41-4F9B-A22F-5FBF11919794}"
 EndProject
