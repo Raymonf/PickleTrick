@@ -32,14 +32,15 @@ namespace PickleTrick.LoginServer
         {
             var packet = new InPacket(packetData);
             var length = packet.ReadUInt16();
-            var opcode = (InOpcode) packet.ReadUInt16();
+            var opcodeId = packet.ReadUInt16();
+            var opcode = (InOpcode)opcodeId;
             packet.Seek(9); // Skip the header.
 
             Log.Verbose(
-                "Received packet from {0}: opcode 0x{1:X2}, length 0x{2:X2} ({3})",
+                "Received packet from {0}: opcode {1} 0x{2:x}, length 0x{3:x} ({3})",
                 client.Socket.RemoteEndPoint,
                 opcode,
-                length,
+                opcodeId,
                 length
             );
 
