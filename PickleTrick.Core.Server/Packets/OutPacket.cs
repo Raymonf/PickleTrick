@@ -52,7 +52,7 @@ namespace PickleTrick.Core.Server.Packets
             return true;
         }
 
-        public void WriteBytePadding(int n, byte b = 0x00)
+        public OutPacket WriteBytePadding(int n, byte b = 0x00)
         {
             var bytes = new byte[n];
 
@@ -61,19 +61,25 @@ namespace PickleTrick.Core.Server.Packets
                     bytes[i] = b;
 
             packet.AddRange(bytes);
+
+            return this;
         }
 
-        public void WriteByte(byte b)
+        public OutPacket WriteByte(byte b)
         {
             packet.Add(b);
+
+            return this;
         }
 
-        public void WriteBytes(byte[] b)
+        public OutPacket WriteBytes(byte[] b)
         {
             packet.AddRange(b);
+
+            return this;
         }
 
-        public void WriteInt16(int i)
+        public OutPacket WriteInt16(int i)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -84,9 +90,11 @@ namespace PickleTrick.Core.Server.Packets
             }
 
             packet.AddRange(BitConverter.GetBytes(i));
+
+            return this;
         }
 
-        public void WriteInt32(int i)
+        public OutPacket WriteInt32(int i)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -99,9 +107,11 @@ namespace PickleTrick.Core.Server.Packets
             }
 
             packet.AddRange(BitConverter.GetBytes(i));
+
+            return this;
         }
 
-        public void WriteInt64(long i)
+        public OutPacket WriteInt64(long i)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -118,9 +128,11 @@ namespace PickleTrick.Core.Server.Packets
             }
 
             packet.AddRange(BitConverter.GetBytes(i));
+
+            return this;
         }
 
-        public void WriteUInt16(uint u)
+        public OutPacket WriteUInt16(uint u)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -131,9 +143,11 @@ namespace PickleTrick.Core.Server.Packets
             }
 
             packet.AddRange(BitConverter.GetBytes(u));
+
+            return this;
         }
 
-        public void WriteUInt32(uint u)
+        public OutPacket WriteUInt32(uint u)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -146,9 +160,11 @@ namespace PickleTrick.Core.Server.Packets
             }
 
             packet.AddRange(BitConverter.GetBytes(u));
+
+            return this;
         }
 
-        public void WriteUInt64(ulong u)
+        public OutPacket WriteUInt64(ulong u)
         {
             if (!BitConverter.IsLittleEndian)
             {
@@ -165,16 +181,19 @@ namespace PickleTrick.Core.Server.Packets
             }
 
             packet.AddRange(BitConverter.GetBytes(u));
+
+            return this;
         }
 
         /// <summary>
         /// Writes a string to the packet "buffer"
         /// </summary>
         /// <param name="str">The string to write</param>
-        public void WriteString(string str)
+        public OutPacket WriteString(string str)
         {
             packet.AddRange(Constants.Encoding.GetBytes(str));
-            return;
+
+            return this;
         }
 
         /// <summary>
@@ -183,7 +202,7 @@ namespace PickleTrick.Core.Server.Packets
         /// </summary>
         /// <param name="str">The string to write</param>
         /// <param name="len">The length of the string</param>
-        public void WriteString(string str, int len)
+        public OutPacket WriteString(string str, int len)
         {
             var b = Constants.Encoding.GetBytes(str);
 
@@ -200,11 +219,15 @@ namespace PickleTrick.Core.Server.Packets
             {
                 WriteBytePadding(len - b.Length);
             }
+
+            return this;
         }
 
-        public void WriteHexString(string hs)
+        public OutPacket WriteHexString(string hs)
         {
             WriteBytes(HexUtil.ToBytes(hs));
+
+            return this;
         }
     }
 }
