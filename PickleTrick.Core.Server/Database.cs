@@ -6,7 +6,7 @@ namespace PickleTrick.Core.Server
 {
     public class Database
     {
-        private static MySqlConnection connection;
+        // private static MySqlConnection connection;
         private static string connectionString = null;
 
         public static bool Setup(DatabaseConfig config)
@@ -19,8 +19,7 @@ namespace PickleTrick.Core.Server
                 config.Password
             );
 
-            connection = new MySqlConnection(connectionString);
-
+            var connection = new MySqlConnection(connectionString);
             try
             {
                 connection.Open();
@@ -33,9 +32,14 @@ namespace PickleTrick.Core.Server
             }
         }
 
+        /// <summary>
+        /// This looks bad, but it'll help us with pooling later.
+        /// We can wrap this in a using (...) statement to get a connection.
+        /// </summary>
+        /// <returns>A (probably) usable MySQL connection</returns>
         public static MySqlConnection Get()
         {
-            return connection;
+            return new MySqlConnection(connectionString);
         }
     }
 }
