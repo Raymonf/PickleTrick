@@ -8,6 +8,11 @@ using Tomlyn;
 using System.IO;
 using Tomlyn.Model;
 using Serilog;
+using PickleTrick.Core.Server.Attributes;
+using System.Linq;
+using System.Collections.Generic;
+using PickleTrick.Core.Server.Interfaces;
+using System.Buffers.Binary;
 
 namespace PickleTrick.Core.Server
 {
@@ -22,6 +27,7 @@ namespace PickleTrick.Core.Server
         public abstract string GetServerName();
 
         protected int port = -1;
+        protected Dictionary<ushort, IPacketHandler> serverPackets = new Dictionary<ushort, IPacketHandler>();
 
         public ServerConfiguration Configuration = new ServerConfiguration();
         public event OnPacketDelegate OnPacket;
@@ -74,9 +80,51 @@ namespace PickleTrick.Core.Server
             var db = Toml.Parse(File.ReadAllText("db.toml")).ToModel();
             var table = (TomlTable) db["db"];
             Configuration.Database.Host = (string) table["host"];
-            Configuration.Database.Database = (string)table["database"];
-            Configuration.Database.Username = (string)table["username"];
-            Configuration.Database.Password = (string)table["password"];
+            Configuration.Database.Database = (string) table["database"];
+            Configuration.Database.Username = (string) table["username"];
+            Configuration.Database.Password = (string) table["password"];
+
+            if (!Database.Setup(Configuration.Database))
+            {
+                // We've failed and already sent the stack trace to the logs.
+                // We can just wait for a keypress and exit.
+                Console.ReadKey();
+                Environment.Exit(1);
+            }
+
+            PopulatePacketHandlers();
+        }
+
+        private void PopulatePacketHandlers()
+        {
+            var handlers = AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(t => t.GetTypes())
+                        .Where(i => typeof(IPacketHandler).IsAssignableFrom(i))
+                        .ToArray();
+
+            foreach (var handler in handlers)
+            {
+                foreach (var attr in handler.GetCustomAttributes(true))
+                {
+                    if (attr is HandlesPacket)
+                    {
+                        serverPackets.Add(((HandlesPacket)attr).opcode, (IPacketHandler) Activator.CreateInstance(handler));
+                        break;
+                    }
+                }
+            }
+
+            Log.Information("Handled opcodes: {0}", string.Join(", ", serverPackets.Keys.Select(x => "0x" + x.ToString("X2"))));
+        }
+
+        private void HandlePacket(Client client, Span<byte> packet)
+        {
+            var opcode = BinaryPrimitives.ReadUInt16LittleEndian(packet[2..4]);
+            if (serverPackets.ContainsKey(opcode))
+            {
+                serverPackets[opcode].Handle(client, packet);
+            }
+            OnPacket(client, packet);
         }
 
         /// <summary>
@@ -225,7 +273,7 @@ namespace PickleTrick.Core.Server
 
                         // Handle a part of the packet, but don't get too far ahead of ourselves.
                         // In other words, fire the event that lets the actual server handle the packet.
-                        OnPacket(client, buffer.Slice(offset, fullLen));
+                        HandlePacket(client, buffer.Slice(offset, fullLen));
 
                         offset += fullLen;
                     }

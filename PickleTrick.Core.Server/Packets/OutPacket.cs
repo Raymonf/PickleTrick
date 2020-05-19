@@ -13,12 +13,12 @@ namespace PickleTrick.Core.Server.Packets
         private readonly ushort opcode;
         private readonly Client client;
 
-        public OutPacket(ushort opcode, IUser user)
+        /*public OutPacket(ushort opcode, IUser user)
         {
             packet = new List<byte>(512); // initial capacity of 512
             this.opcode = opcode;
             client = user.Client;
-        }
+        }*/
 
         public OutPacket(ushort opcode, Client client)
         {
@@ -27,9 +27,9 @@ namespace PickleTrick.Core.Server.Packets
             this.client = client;
         }
 
-        public OutPacket(Enum opcode, IUser user)
+        /*public OutPacket(Enum opcode, IUser user)
             : this(Convert.ToUInt16(opcode), user)
-        { }
+        { }*/
 
         public OutPacket(Enum opcode, Client client)
             : this(Convert.ToUInt16(opcode), client)
