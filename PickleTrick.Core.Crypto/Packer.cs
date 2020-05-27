@@ -72,7 +72,7 @@ namespace PickleTrick.Core.Crypto
 
         public static byte[] Pack(CryptoClient client, ushort opcode, byte[] data)
         {
-            // Length: 9 bytes (header  ) + data + 2 bytes (tail checksum)
+            // Length: 9 bytes (header) + data + 2 bytes (tail checksum)
             var result = /*stackalloc*/ new byte[9 + data.Length + 2];
             Span<byte> span = result;
 

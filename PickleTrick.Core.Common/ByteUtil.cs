@@ -32,7 +32,6 @@ namespace PickleTrick.Core.Common
             b[i + 1] = (byte)(us >> 8);
         }
 
-
         public static void CopyTo(byte[] b, int i, ushort us)
         {
             b[i] = (byte)us;

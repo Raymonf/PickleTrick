@@ -25,13 +25,13 @@ namespace PickleTrick.LoginServer.Packets
 
             // Send server select
             // Temporary. We'll populate this with data from the configuration soon.
-            var servers = new OutPacket(OutOpcode.ServerListInfo, client)
+            new OutPacket(OutOpcode.ServerListInfo, client)
                 .WriteUInt32(100038499) // User ID
                 .WriteUInt64(17069199591863541) // User authentication token for LoginServer
                 .WriteHexString("01 01 01 00 01 00 44 6F 6E 20 43 61 76 61 6C 69 65 72 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 53 65 72 76 65 72 20 31 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 B8 0B 03 00 B7 0D")
                 .Send();
 
             Log.Verbose("Sent notice and server list packet to {0}.", client.Socket.RemoteEndPoint);
-        }
+        } 
     }
 }

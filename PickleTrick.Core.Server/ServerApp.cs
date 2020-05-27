@@ -198,8 +198,7 @@ namespace PickleTrick.Core.Server
             }
             catch (Exception ex) when (
                 // The user probably forcefully disconnected.
-                ex is SocketException
-                || ex is ObjectDisposedException
+                ex is SocketException || ex is ObjectDisposedException
             )
             {
                 // Try to close the socket but don't freak out if it fails.
@@ -309,7 +308,7 @@ namespace PickleTrick.Core.Server
         {
             try
             {
-                Socket socket = (Socket)ar.AsyncState;
+                Socket socket = (Socket) ar.AsyncState;
                 int bytesSent = socket.EndSend(ar);
             }
             catch (Exception e)
@@ -322,7 +321,7 @@ namespace PickleTrick.Core.Server
                     // Try to close the socket, but don't freak out if it errors.
                     try
                     {
-                        ((Socket)ar.AsyncState).Close();
+                        ((Socket) ar.AsyncState).Close();
                     }
                     catch { }
                 }
