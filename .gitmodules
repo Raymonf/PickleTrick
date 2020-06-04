@@ -1,0 +1,3 @@
+[submodule "PickleTrick.FirstLoginServer"]
+	path = PickleTrick.FirstLoginServer
+	url = https://github.com/Raymonf/PickleTrick.FirstLoginServer
