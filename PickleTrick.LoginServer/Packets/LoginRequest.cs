@@ -6,13 +6,16 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace PickleTrick.LoginServer.Packets
 {
     [HandlesPacket(InOpcode.LoginRequest)]
     class LoginRequest : IPacketHandler
     {
-        public void Handle(Client client, Span<byte> packet)
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async Task Handle(Client client, byte[] packet)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             // Notice packet
             // Usually would contain a URL and version ID.
@@ -32,6 +35,6 @@ namespace PickleTrick.LoginServer.Packets
                 .Send();
 
             Log.Verbose("Sent notice and server list packet to {0}.", client.Socket.RemoteEndPoint);
-        } 
+        }
     }
 }

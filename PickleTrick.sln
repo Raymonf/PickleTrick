@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.LoginServer", "PickleTrick.LoginServer\PickleTrick.LoginServer.csproj", "{312335F7-CF27-4371-BA19-8A0EDCE1E14A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.FirstLoginServer", "PickleTrick.FirstLoginServer\PickleTrick.FirstLoginServer.csproj", "{9DBAAC37-0FC6-4B76-AF85-29B7DB2C87E0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.Core.Common", "PickleTrick.Core.Common\PickleTrick.Core.Common.csproj", "{AE0F926E-E3AF-4BFF-987E-B895A17964AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PickleTrick.Core.Server", "PickleTrick.Core.Server\PickleTrick.Core.Server.csproj", "{68FAD52C-FB41-4F9B-A22F-5FBF11919794}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.Core.Server", "PickleTrick.Core.Server\PickleTrick.Core.Server.csproj", "{68FAD52C-FB41-4F9B-A22F-5FBF11919794}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PickleTrick.Core.Crypto", "PickleTrick.Core.Crypto\PickleTrick.Core.Crypto.csproj", "{22183904-D9E5-41D0-88FB-6AB95EE982EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.Core.Crypto", "PickleTrick.Core.Crypto\PickleTrick.Core.Crypto.csproj", "{22183904-D9E5-41D0-88FB-6AB95EE982EB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PickleTrick.LoginServer", "PickleTrick.LoginServer\PickleTrick.LoginServer.csproj", "{28DD8227-9F17-4FD5-A87A-38827C251455}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +19,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{312335F7-CF27-4371-BA19-8A0EDCE1E14A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{312335F7-CF27-4371-BA19-8A0EDCE1E14A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{312335F7-CF27-4371-BA19-8A0EDCE1E14A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{312335F7-CF27-4371-BA19-8A0EDCE1E14A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DBAAC37-0FC6-4B76-AF85-29B7DB2C87E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DBAAC37-0FC6-4B76-AF85-29B7DB2C87E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DBAAC37-0FC6-4B76-AF85-29B7DB2C87E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DBAAC37-0FC6-4B76-AF85-29B7DB2C87E0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AE0F926E-E3AF-4BFF-987E-B895A17964AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AE0F926E-E3AF-4BFF-987E-B895A17964AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AE0F926E-E3AF-4BFF-987E-B895A17964AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,6 +35,10 @@ Global
 		{22183904-D9E5-41D0-88FB-6AB95EE982EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22183904-D9E5-41D0-88FB-6AB95EE982EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22183904-D9E5-41D0-88FB-6AB95EE982EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28DD8227-9F17-4FD5-A87A-38827C251455}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28DD8227-9F17-4FD5-A87A-38827C251455}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28DD8227-9F17-4FD5-A87A-38827C251455}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28DD8227-9F17-4FD5-A87A-38827C251455}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

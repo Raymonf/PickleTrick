@@ -20,21 +20,22 @@ namespace PickleTrick.LoginServer
             OnPacket += LoginServer_OnPacket;
         }
 
+        public override void Preconfigure() { }
+
         public override void PrivateConfigure()
         {
             var login = Toml.Parse(File.ReadAllText("login.toml")).ToModel();
-            var table = (TomlTable) login["loginserver"];
-            port = (int)(long) table["port"]; // Tomlyn reads ints as longs, so cast to long and then int.
+            var table = (TomlTable)login["loginserver"];
+            port = (int)(long)table["port"]; // Tomlyn reads ints as longs, so cast to long and then int.
         }
 
         // We don't need this, but this is useful for debugging.
-        private void LoginServer_OnPacket(Client client, Span<byte> packetData)
+        private void LoginServer_OnPacket(Client client, byte[] packetData)
         {
             var packet = new InPacket(packetData);
             var length = packet.ReadUInt16();
             var opcodeId = packet.ReadUInt16();
             var opcode = (InOpcode)opcodeId;
-            // packet.Seek(9); // Skip the header.
 
             Log.Verbose(
                 "Received packet from {0}: opcode {1} 0x{2:x}, length 0x{3:x} ({3})",

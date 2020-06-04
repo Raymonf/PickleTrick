@@ -12,12 +12,6 @@ namespace PickleTrick.Core.Server.Packets
         private int offset = 0;
         private readonly byte[] packet = null;
 
-        public InPacket(Span<byte> packet)
-        {
-            // TODO: Is there any way to kill this allocation?
-            this.packet = packet.ToArray();
-        }
-
         public InPacket(byte[] packet)
         {
             this.packet = packet;

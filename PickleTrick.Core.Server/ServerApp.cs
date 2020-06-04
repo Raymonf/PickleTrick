@@ -13,6 +13,8 @@ using System.Linq;
 using System.Collections.Generic;
 using PickleTrick.Core.Server.Interfaces;
 using System.Buffers.Binary;
+using Nito.AsyncEx;
+using PickleTrick.Core.Server.Data;
 
 namespace PickleTrick.Core.Server
 {
@@ -24,6 +26,7 @@ namespace PickleTrick.Core.Server
         /// </summary>
         public abstract void PrivateInit();
         public abstract void PrivateConfigure();
+        public abstract void Preconfigure();
         public abstract string GetServerName();
 
         protected int port = -1;
@@ -31,6 +34,9 @@ namespace PickleTrick.Core.Server
 
         public ServerConfiguration Configuration = new ServerConfiguration();
         public event OnPacketDelegate OnPacket;
+
+        public event OnConnectDelegate OnConnect;
+        public event OnDisconnectDelegate OnDisconnect;
 
         // Thread signal.  
         public ManualResetEvent allDone = new ManualResetEvent(false);
@@ -78,13 +84,16 @@ namespace PickleTrick.Core.Server
                 + new string('-', GetServerName().Length + 24));
 
             var db = Toml.Parse(File.ReadAllText("db.toml")).ToModel();
-            var table = (TomlTable) db["db"];
-            Configuration.Database.Host = (string) table["host"];
-            Configuration.Database.Database = (string) table["database"];
-            Configuration.Database.Username = (string) table["username"];
-            Configuration.Database.Password = (string) table["password"];
+            var table = (TomlTable)db["db"];
+            Configuration.Database.Host = (string)table["host"];
+            Configuration.Database.Database = (string)table["database"];
+            Configuration.Database.Username = (string)table["username"];
+            Configuration.Database.Password = (string)table["password"];
 
-            if (!Database.Setup(Configuration.Database))
+            // We can initialize the database first in Preconfigure if needed.
+            Preconfigure();
+
+            if (!Database.Setup(DatabaseType.MySql, Configuration.Database))
             {
                 // We've failed and already sent the stack trace to the logs.
                 // We can just wait for a keypress and exit.
@@ -108,7 +117,7 @@ namespace PickleTrick.Core.Server
                 {
                     if (attr is HandlesPacket)
                     {
-                        serverPackets.Add(((HandlesPacket)attr).opcode, (IPacketHandler) Activator.CreateInstance(handler));
+                        serverPackets.Add(((HandlesPacket)attr).opcode, (IPacketHandler)Activator.CreateInstance(handler));
                         break;
                     }
                 }
@@ -117,12 +126,12 @@ namespace PickleTrick.Core.Server
             Log.Information("Handled opcodes: {0}", string.Join(", ", serverPackets.Keys.Select(x => "0x" + x.ToString("X2"))));
         }
 
-        private void HandlePacket(Client client, Span<byte> packet)
+        private void HandlePacket(Client client, byte[] packet)
         {
             var opcode = BinaryPrimitives.ReadUInt16LittleEndian(packet[2..4]);
             if (serverPackets.ContainsKey(opcode))
             {
-                serverPackets[opcode].Handle(client, packet);
+                AsyncContext.Run(() => serverPackets[opcode].Handle(client, packet[9..]));
             }
             OnPacket(client, packet);
         }
@@ -177,6 +186,8 @@ namespace PickleTrick.Core.Server
                 Socket = handler
             };
 
+            OnConnect(state);
+
             Log.Information("New connection received from {0}.", handler.RemoteEndPoint);
 
             handler.BeginReceive(state.CurrentBuffer, 0, state.CurrentBuffer.Length, 0,
@@ -204,11 +215,24 @@ namespace PickleTrick.Core.Server
                 // Try to close the socket but don't freak out if it fails.
                 try
                 {
+                    OnDisconnect(client);
                     handler.Close();
                 }
                 catch { }
 
                 // Don't try to read any more data. We're out of here.
+                return;
+            }
+
+            if (!handler.Connected || bytesRead == 0)
+            {
+                // Connection is terminated, either by force or willingly
+                OnDisconnect(client);
+                try
+                {
+                    handler.Close();
+                }
+                catch { }
                 return;
             }
 
@@ -272,7 +296,15 @@ namespace PickleTrick.Core.Server
 
                         // Handle a part of the packet, but don't get too far ahead of ourselves.
                         // In other words, fire the event that lets the actual server handle the packet.
-                        HandlePacket(client, buffer.Slice(offset, fullLen));
+                        try
+                        {
+                            HandlePacket(client, buffer.Slice(offset, fullLen).ToArray());
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Packet handler error. Disconnecting client {0}.", client.Socket.RemoteEndPoint);
+                            throw ex; // Catch it in the exception handler outside.
+                        }
 
                         offset += fullLen;
                     }
@@ -283,6 +315,7 @@ namespace PickleTrick.Core.Server
                 catch (Exception e)
                 {
                     Log.Error(e.ToString());
+
                     if (System.Diagnostics.Debugger.IsAttached)
                         throw e;
                     else
@@ -290,6 +323,7 @@ namespace PickleTrick.Core.Server
                         // Try to close the socket, but don't freak out if it errors.
                         try
                         {
+                            OnDisconnect(client);
                             handler.Close();
                         }
                         catch { }
@@ -308,7 +342,7 @@ namespace PickleTrick.Core.Server
         {
             try
             {
-                Socket socket = (Socket) ar.AsyncState;
+                Socket socket = (Socket)ar.AsyncState;
                 int bytesSent = socket.EndSend(ar);
             }
             catch (Exception e)
@@ -321,7 +355,8 @@ namespace PickleTrick.Core.Server
                     // Try to close the socket, but don't freak out if it errors.
                     try
                     {
-                        ((Socket) ar.AsyncState).Close();
+                        OnDisconnect((Client)ar.AsyncState);
+                        ((Client)ar.AsyncState).Socket.Close();
                     }
                     catch { }
                 }

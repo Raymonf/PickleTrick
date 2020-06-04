@@ -30,3 +30,9 @@ The server uses MySQL with development being done mostly with MariaDB. As there'
 Like the original TrickEmuS2, PickleTrick will eventually also require a patch to enter the game. This is due to not having the original packet structures to send to the client. A vanilla client would crash from that.
 
 Patch the jump instruction (jne/je) to jmp at `Trickster.0+0x74497`. `dummy` should be used as your password if you aren't able to patch the login code to use your actual password. This is due to Trickster's SSO system.
+
+### PickleTrick.FirstLoginServer
+
+When you load the solution, you might get an error about a project named PickleTrick.FirstLoginServer. That project is a reimplementation of the official FirstLoginServer that isn't included with PickleTrick. It was made to test out the PickleTrick core.
+
+That's the reason you can see `Preconfigure` in the `ServerApp` class. FLS uses SQL Server due to it being a replacement for the official server, so you can optionally choose to connect to SQL Server with a call to `Database.Setup` in `Preconfigure`. If you want to use the PickleTrick core to write your own FLS implementation, this is what you should do.

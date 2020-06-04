@@ -12,6 +12,8 @@ namespace PickleTrick.Core.Server
     {
         public CryptoClient Crypto { get; set; } = new CryptoClient();
 
+        public object State { get; set; }
+
         public Socket Socket { get; set; }
         public byte[] CurrentBuffer { get; } = new byte[65535];
 

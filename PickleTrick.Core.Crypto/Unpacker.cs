@@ -36,7 +36,7 @@ namespace PickleTrick.Core.Crypto
 
             return false;
         }
-        
+
         private static Header PacketToHeader(Span<byte> data)
         {
             return new Header()

@@ -1,6 +1,7 @@
 ﻿using PickleTrick.Core.Common;
 using PickleTrick.Core.Crypto;
 using PickleTrick.Core.Server.Interfaces;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -37,6 +38,8 @@ namespace PickleTrick.Core.Server.Packets
 
         public bool Send()
         {
+            Log.Information("Sending out: {0}", ByteUtil.ByteToHex(packet.ToArray()));
+
             byte[] data = Packer.Pack(client.Crypto, opcode, packet.ToArray());
             try
             {
@@ -79,14 +82,14 @@ namespace PickleTrick.Core.Server.Packets
             return this;
         }
 
-        public OutPacket WriteInt16(int i)
+        public OutPacket WriteInt16(ushort i)
         {
             if (!BitConverter.IsLittleEndian)
             {
                 var b1 = (i >> 0) & 0xff;
                 var b2 = (i >> 8) & 0xff;
 
-                i = b1 << 8 | b2 << 0;
+                i = (ushort)(b1 << 8 | b2 << 0);
             }
 
             packet.AddRange(BitConverter.GetBytes(i));
@@ -132,14 +135,14 @@ namespace PickleTrick.Core.Server.Packets
             return this;
         }
 
-        public OutPacket WriteUInt16(uint u)
+        public OutPacket WriteUInt16(ushort u)
         {
             if (!BitConverter.IsLittleEndian)
             {
                 var b1 = (u >> 0) & 0xff;
                 var b2 = (u >> 8) & 0xff;
 
-                u = b1 << 8 | b2 << 0;
+                u = (ushort)(b1 << 8 | b2 << 0);
             }
 
             packet.AddRange(BitConverter.GetBytes(u));
@@ -156,7 +159,7 @@ namespace PickleTrick.Core.Server.Packets
                 var b3 = (u >> 16) & 0xff;
                 var b4 = (u >> 24) & 0xff;
 
-                u =  b1 << 24 | b2 << 16 | b3 << 8 | b4 << 0;
+                u = b1 << 24 | b2 << 16 | b3 << 8 | b4 << 0;
             }
 
             packet.AddRange(BitConverter.GetBytes(u));
@@ -192,6 +195,14 @@ namespace PickleTrick.Core.Server.Packets
         public OutPacket WriteString(string str)
         {
             packet.AddRange(Constants.Encoding.GetBytes(str));
+            WriteByte(0x00); // \0 to end the string
+
+            return this;
+        }
+
+        public OutPacket WriteBoolean(bool b)
+        {
+            WriteByte(b ? (byte)0x1 : (byte)0x0);
 
             return this;
         }
@@ -210,15 +221,13 @@ namespace PickleTrick.Core.Server.Packets
             {
                 WriteBytes(b);
             }
-            else if (len - 1 >= 0)
+            else if (b.Length < len)
             {
-                WriteBytes(b[..(len - 1)]);
-            }
-
-            if (b.Length < len)
-            {
+                WriteBytes(b);
                 WriteBytePadding(len - b.Length);
             }
+
+            WriteByte(0x00); // \0 to end the string
 
             return this;
         }

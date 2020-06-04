@@ -1,45 +1,39 @@
-﻿using MySql.Data.MySqlClient;
-using Serilog;
-using System;
+﻿using System;
+using System.Data.Common;
+using PickleTrick.Core.Server.Data;
+using PickleTrick.Core.Server.DatabaseConnectors;
+using PickleTrick.Core.Server.Interfaces;
 
 namespace PickleTrick.Core.Server
 {
     public class Database
     {
-        // private static MySqlConnection connection;
-        private static string connectionString = null;
+        private static IDbConnector connector = null;
 
-        public static bool Setup(DatabaseConfig config)
+        public static bool Setup(DatabaseType dbType, DatabaseConfig config)
         {
-            connectionString = string.Format(
-                "Server={0};database={1};UID={2};password={3}",
-                config.Host,
-                config.Database,
-                config.Username,
-                config.Password
-            );
-
-            var connection = new MySqlConnection(connectionString);
-            try
+            if (connector != null)
             {
-                connection.Open();
                 return true;
             }
-            catch (Exception ex)
+
+            connector = dbType switch
             {
-                Log.Error(ex, "Unable to connect to the database. Attempted connection string: {0}", connectionString);
-                return false;
-            }
+                DatabaseType.SqlServer => new SqlServerConnector(config),
+                DatabaseType.MySql => new MySqlConnector(config),
+                _ => null // Um...
+            };
+
+            return connector.Setup();
         }
 
         /// <summary>
-        /// This looks bad, but it'll help us with pooling later.
-        /// We can wrap this in a using (...) statement to get a connection.
+        /// Gets a database connection to use to query the database.
         /// </summary>
-        /// <returns>A (probably) usable MySQL connection</returns>
-        public static MySqlConnection Get()
+        /// <returns>A (probably) usable database connection</returns>
+        public static DbConnection Get()
         {
-            return new MySqlConnection(connectionString);
+            return connector.Get();
         }
     }
 }
