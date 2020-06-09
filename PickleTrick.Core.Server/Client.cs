@@ -12,10 +12,17 @@ namespace PickleTrick.Core.Server
     {
         public CryptoClient Crypto { get; set; } = new CryptoClient();
 
+        /// <summary>
+        /// A flag for the first packet sent.
+        /// </summary>
+        public bool HasValidPacket { get; set; } = false;
+
         public object State { get; set; }
 
         public Socket Socket { get; set; }
-        public byte[] CurrentBuffer { get; } = new byte[65535];
+
+        private byte[] _currentBuffer =  new byte[65535];
+        public byte[] CurrentBuffer { get { return _currentBuffer; } }
 
         /// <summary>
         /// Trickster sometimes merges multiple packets into one.
@@ -25,6 +32,13 @@ namespace PickleTrick.Core.Server
         /// If this is null, that means we don't have a buffer. Otherwise, we should pretend that this buffer
         /// comes before the next packet (aka the packet we'd be currently processing inside TrickPacketHandler).
         /// </summary>
-        public List<byte> StoredPacketBuffer { get; } = new List<byte>(65535);
+        private List<byte> _storedPacketBuffer = new List<byte>(32767);
+        public List<byte> StoredPacketBuffer { get { return _storedPacketBuffer; } }
+
+        public void DestroyBuffers()
+        {
+            _currentBuffer = null;
+            _storedPacketBuffer = null;
+        }
     }
 }

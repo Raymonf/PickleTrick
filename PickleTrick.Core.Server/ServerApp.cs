@@ -15,6 +15,7 @@ using PickleTrick.Core.Server.Interfaces;
 using System.Buffers.Binary;
 using Nito.AsyncEx;
 using PickleTrick.Core.Server.Data;
+using System.Text;
 
 namespace PickleTrick.Core.Server
 {
@@ -67,6 +68,23 @@ namespace PickleTrick.Core.Server
         }
 
         /// <summary>
+        /// The pre-read packet hook. When overridden, the server can determine whether to exit early or not.
+        /// In other words, if the overridden hook returns true, it means the hook has handled the packet.
+        /// From there, you can decide to close the socket (<code>client.Socket.Close()</code>), or just keep processing.
+        /// 
+        /// In general, you should return true if the packet is handled by the hook, and false if not.
+        /// If you don't close the socket, the server will keep processing the packet received.
+        /// </summary>
+        /// <param name="client">Client state</param>
+        /// <param name="bytesRead">Amount of bytes we can read at most</param>
+        /// <returns>true if the hook handles the packet</returns>
+        public virtual bool PreReadPacketHook(Client client, int bytesRead)
+        {
+            // Pass the packet on.
+            return false;
+        }
+
+        /// <summary>
         /// We will configure the database here.
         /// Server apps will get to configure themselves in PrivateConfig.
         /// </summary>
@@ -76,6 +94,7 @@ namespace PickleTrick.Core.Server
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
                 .WriteTo.Console()
+                .WriteTo.File("logs/log-.log", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
             Console.Title = GetServerName();
@@ -181,17 +200,30 @@ namespace PickleTrick.Core.Server
             Socket handler = listener.EndAccept(ar);
 
             // Create the client and determine the buffer to use.
-            Client state = new Client
+            Client client = new Client
             {
                 Socket = handler
             };
 
-            OnConnect(state);
+            OnConnect(client);
 
             Log.Information("New connection received from {0}.", handler.RemoteEndPoint);
 
-            handler.BeginReceive(state.CurrentBuffer, 0, state.CurrentBuffer.Length, 0,
-                new AsyncCallback(ReadCallback), state);
+            try
+            {
+                handler.BeginReceive(client.CurrentBuffer, 0, client.CurrentBuffer.Length, 0,
+                    new AsyncCallback(ReadCallback), client);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "An exception occurred during BeginReceive. Attempting to close socket for {0}.", handler.RemoteEndPoint);
+                try
+                {
+                    client.DestroyBuffers();
+                    handler.Close();
+                }
+                catch { }
+            }
         }
 
         private void ReadCallback(IAsyncResult ar)
@@ -238,6 +270,16 @@ namespace PickleTrick.Core.Server
 
             if (bytesRead > 0)
             {
+                try
+                {
+                    if (PreReadPacketHook(client, bytesRead))
+                    {
+                        if (!client.Socket.Connected)
+                            return;
+                    }
+                }
+                catch { }
+
                 /*
                  * Trickster has two types of special packets, which I call the following:
                  * 1. Merged packets, where multiple packets are sent as one packet.
@@ -284,6 +326,12 @@ namespace PickleTrick.Core.Server
 
                         if (!hasHeader || offset + fullLen >= buffer.Length)
                         {
+                            // Expand the capacity only if needed.
+                            if (stored.Count + buffer.Length >= stored.Capacity &&
+                                stored.Capacity < 65535 &&
+                                stored.Count + buffer.Length <= 65535)
+                                stored.Capacity = 65535;
+
                             if (stored.Count + buffer.Length > stored.Capacity)
                                 throw new Exception("Packet is too large!");
 
@@ -293,6 +341,8 @@ namespace PickleTrick.Core.Server
 
                             break; // Continue receiving data.
                         }
+
+                        client.HasValidPacket = true;
 
                         // Handle a part of the packet, but don't get too far ahead of ourselves.
                         // In other words, fire the event that lets the actual server handle the packet.
@@ -328,37 +378,6 @@ namespace PickleTrick.Core.Server
                         }
                         catch { }
                     }
-                }
-            }
-        }
-
-        private void Send(Socket handler, byte[] data)
-        {
-            // Begin sending the data to the remote device.  
-            handler.BeginSend(data, 0, data.Length, 0, new AsyncCallback(SendCallback), handler);
-        }
-
-        private void SendCallback(IAsyncResult ar)
-        {
-            try
-            {
-                Socket socket = (Socket)ar.AsyncState;
-                int bytesSent = socket.EndSend(ar);
-            }
-            catch (Exception e)
-            {
-                Log.Error(e.ToString());
-                if (System.Diagnostics.Debugger.IsAttached)
-                    throw e;
-                else
-                {
-                    // Try to close the socket, but don't freak out if it errors.
-                    try
-                    {
-                        OnDisconnect((Client)ar.AsyncState);
-                        ((Client)ar.AsyncState).Socket.Close();
-                    }
-                    catch { }
                 }
             }
         }
