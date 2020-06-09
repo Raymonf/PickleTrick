@@ -38,7 +38,7 @@ namespace PickleTrick.Core.Server.Packets
 
         public bool Send()
         {
-            Log.Information("Sending out: {0}", ByteUtil.ByteToHex(packet.ToArray()));
+            // Log.Information("Sending out: {0}", ByteUtil.ByteToHex(packet.ToArray()));
 
             byte[] data = Packer.Pack(client.Crypto, opcode, packet.ToArray());
             try
