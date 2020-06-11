@@ -16,6 +16,7 @@ using System.Buffers.Binary;
 using Nito.AsyncEx;
 using PickleTrick.Core.Server.Data;
 using System.Text;
+using PickleTrick.Core.Server.Exceptions;
 
 namespace PickleTrick.Core.Server
 {
@@ -361,6 +362,17 @@ namespace PickleTrick.Core.Server
 
                     handler.BeginReceive(client.CurrentBuffer, 0, client.CurrentBuffer.Length, 0,
                         new AsyncCallback(ReadCallback), client);
+                }
+                catch (PacketHeaderException)
+                {
+                    Log.Error("{0} sent us a broken packet. Disconnecting.", ((IPEndPoint)client.Socket.RemoteEndPoint).Address);
+
+                    try
+                    {
+                        OnDisconnect(client);
+                        handler.Close();
+                    }
+                    catch { }
                 }
                 catch (Exception e)
                 {
