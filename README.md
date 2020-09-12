@@ -27,9 +27,7 @@ The server uses MySQL with development being done mostly with MariaDB. As there'
 
 ### Client
 
-Like the original TrickEmuS2, PickleTrick will eventually also require a patch to enter the game. This is due to not having the original packet structures to send to the client. A vanilla client would crash from that.
-
-Patch the jump instruction (jne/je) to jmp at `Trickster.0+0x74497`. `dummy` should be used as your password if you aren't able to patch the login code to use your actual password. This is due to Trickster's SSO system.
+`dummy` should be used as your password if you aren't able to patch the login code to use your actual password. This is due to Trickster's SSO system being used in the past.
 
 ### PickleTrick.FirstLoginServer
 
