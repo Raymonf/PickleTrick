@@ -206,7 +206,8 @@ namespace PickleTrick.Core.Server
                 Socket = handler
             };
 
-            OnConnect(client);
+            if (OnConnect != null)
+                OnConnect(client);
 
             Log.Information("New connection received from {0}.", handler.RemoteEndPoint);
 
@@ -248,7 +249,8 @@ namespace PickleTrick.Core.Server
                 // Try to close the socket but don't freak out if it fails.
                 try
                 {
-                    OnDisconnect(client);
+                    if (OnDisconnect != null)
+                        OnDisconnect(client);
                     handler.Close();
                 }
                 catch { }
@@ -260,7 +262,8 @@ namespace PickleTrick.Core.Server
             if (!handler.Connected || bytesRead == 0)
             {
                 // Connection is terminated, either by force or willingly
-                OnDisconnect(client);
+                if (OnDisconnect != null)
+                    OnDisconnect(client);
                 try
                 {
                     handler.Close();
@@ -337,7 +340,7 @@ namespace PickleTrick.Core.Server
                                 throw new Exception("Packet is too large!");
 
                             // https://github.com/dotnet/runtime/issues/1530
-                            // Unnecessary allocation. Check again when .NET 5.0 comes out.
+                            // Unnecessary allocation. .NET 5.0 did not release with a fix :(
                             client.StoredPacketBuffer.AddRange(buffer[offset..].ToArray());
 
                             break; // Continue receiving data.
@@ -369,7 +372,8 @@ namespace PickleTrick.Core.Server
 
                     try
                     {
-                        OnDisconnect(client);
+                        if (OnDisconnect != null)
+                            OnDisconnect(client);
                         handler.Close();
                     }
                     catch { }
@@ -385,7 +389,8 @@ namespace PickleTrick.Core.Server
                         // Try to close the socket, but don't freak out if it errors.
                         try
                         {
-                            OnDisconnect(client);
+                            if (OnDisconnect != null)
+                                OnDisconnect(client);
                             handler.Close();
                         }
                         catch { }
