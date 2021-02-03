@@ -27,6 +27,8 @@ namespace PickleTrick.LoginServer
             var login = Toml.Parse(File.ReadAllText("login.toml")).ToModel();
             var table = (TomlTable)login["loginserver"];
             port = (int)(long)table["port"]; // Tomlyn reads ints as longs, so cast to long and then int.
+
+            WorldState.StartRefreshWorker();
         }
 
         // We don't need this, but this is useful for debugging.
