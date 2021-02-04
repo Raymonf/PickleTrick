@@ -1,21 +1,20 @@
 # PickleTrick
 
-This is a rewrite of TrickEmuS2, making it another Trickster Online Season 2 emulator. The goal of this project is to emulate the server of Trickster Online, but with better code than what TrickEmuS2 has. Unlike TrickEmuS2, PickleTrick is written with C# 8 features in mind, like `Span<T>`.
+This is a rewrite of TrickEmuS2, making it another Trickster Online Season 2 emulator. The goal of this project is to emulate the server of Trickster Online, but with a better codebase than TrickEmuS2's.
 
 PickleTrick is in a very early stage. I'm currently considering different design choices before continuing on with the implementation of more features and servers.
 
 Some obstacles to figure out:
 
-* A way to do things asynchronously, especially database calls
-* Whether the server core can handle a large number of connections with its current design
+* A way to do things asynchronously, especially packet sending
 * Whether the config format is sufficient for the future
-* Probably more.
+* The entire channel and game servers
 
 ### Progress
 
 The code is barely tested. Unit tests are unlikely to be made due to the project being an emulator for another game. At the current moment, the only thing the server can do is send a server list packet with dummy data.
 
-Development is pretty slow, too, as I only occasionally come back to work on this every now and then.
+Development is pretty slow, too, as I only occasionally come back to work on this every now and then. Contributions are welcome!
 
 ### Getting Started
 
