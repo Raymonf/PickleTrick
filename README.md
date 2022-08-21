@@ -2,19 +2,14 @@
 
 This is a rewrite of TrickEmuS2, making it another Trickster Online Season 2 emulator. The goal of this project is to emulate the server of Trickster Online, but with a better codebase than TrickEmuS2's.
 
-PickleTrick is in a very early stage. I'm currently considering different design choices before continuing on with the implementation of more features and servers.
+PickleTrick is in a very early stage, yet the core is somewhat battle-tested. There are some bugs to iron out, but it is mostly stable. Some obstacles to figure out:
 
-Some obstacles to figure out:
-
-* A way to do things asynchronously, especially packet sending
 * Whether the config format is sufficient for the future
 * The entire channel and game servers
 
 ### Progress
 
-The code is barely tested. Unit tests are unlikely to be made due to the project being an emulator for another game. At the current moment, the only thing the server can do is send a server list packet with dummy data.
-
-Development is pretty slow, too, as I only occasionally come back to work on this every now and then. Contributions are welcome!
+At the current moment, the only thing the server can do is send a server list packet with dummy data. Please see the section about PickleTrick.FirstLoginServer below. Contributions are welcome!
 
 ### Getting Started
 
@@ -22,7 +17,7 @@ Compile the projects and copy over the `*.toml` files to the folder the server b
 
 You'll want to patch your client with the (very undetailed) instructions provided below in the "Client" section.
 
-The server uses MySQL with development being done mostly with MariaDB. As there's no actual stuff going on with the database yet, there's no database schema or SQL file provided.
+The server uses MySQL with development being done mostly in MariaDB. As there's no actual stuff going on with the database yet, there's no database schema or SQL file provided.
 
 ### Client
 
